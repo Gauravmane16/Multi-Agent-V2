@@ -1,8 +1,16 @@
-streamlit
-pandas
-numpy
-scikit-learn
-requests
-python-dotenv
-langchain
-langchain_community
+# streamlit
+# pandas
+# numpy
+# scikit-learn
+# requests
+# python-dotenv
+# langchain
+# langchain_community
+streamlit>=1.22.0
+langchain>=0.0.267
+openai>=0.27.8
+chromadb>=0.4.6
+python-dotenv>=1.0.0
+difflib>=3.7.0
+tiktoken>=0.4.0
+langchain-openai>=0.0.2
