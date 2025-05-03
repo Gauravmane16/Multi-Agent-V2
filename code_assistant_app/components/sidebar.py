@@ -44,7 +44,7 @@ def render_sidebar() -> Optional[str]:
         with st.expander("Advanced Settings"):
             model = st.selectbox(
                 "Model",
-                options=["gpt-3.5-turbo-16k", "gpt-4", "gpt-4-turbo"],
+                options=["gpt-4-turbo","gpt-4","gpt-3.5-turbo-16k"],
                 index=0
             )
             
