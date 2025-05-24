@@ -9,6 +9,7 @@ from components.sidebar import render_sidebar
 from components.optimizer_tab import render_optimizer_tab
 from components.reviewer_tab import render_reviewer_tab
 from components.comparer_tab import render_comparer_tab
+from components.test_generator_tab import render_test_generator_tab  # Add this import
 
 # Load environment variables from .env file
 # load_dotenv()
@@ -38,7 +39,12 @@ if "temperature" not in st.session_state:
 api_key = render_sidebar()
 
 # Create tabs for different functionalities
-tab1, tab2, tab3 = st.tabs(["Code Optimization", "Code Review", "Code Comparison"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Code Optimization",
+    "Code Review",
+    "Code Comparison",
+    "Test Generator"  # Add new tab
+])
 
 # Render each tab
 with tab1:
@@ -49,6 +55,9 @@ with tab2:
 
 with tab3:
     render_comparer_tab(api_key)
+
+with tab4:  # Add new tab rendering
+    render_test_generator_tab(api_key)
 
 # Add a footer
 st.markdown("---")
