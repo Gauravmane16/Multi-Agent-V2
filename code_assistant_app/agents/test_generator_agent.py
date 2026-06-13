@@ -3,7 +3,17 @@ Unit test generator agent for the Code Assistant App.
 """
 
 from langchain_openai import ChatOpenAI
-from langchain.agents import initialize_agent, Tool
+try:
+    from langchain.agents import initialize_agent, Tool
+except Exception:
+    try:
+        from langchain.agents.agent import initialize_agent
+    except Exception:
+        initialize_agent = None
+    try:
+        from langchain.tools import Tool
+    except Exception:
+        Tool = None
 from langchain.agents.agent_types import AgentType
 from langchain.chains import LLMChain
 from langchain.prompts.chat import (
@@ -49,11 +59,6 @@ def create_test_generator_agent(api_key: str, model_name: str, temperature: floa
 5. Add clear comments explaining test cases
 
 Remember to:
-- Follow testing best practices
-- Include assertion messages
-- Use meaningful test names
-- Group related tests
-- Mock external dependencies when needed"""
 
         chat_prompt = ChatPromptTemplate.from_messages([
             SystemMessagePromptTemplate.from_template(system_template),
@@ -62,6 +67,13 @@ Remember to:
         
         # Create test generation chain
         test_chain = LLMChain(llm=llm, prompt=chat_prompt)
+        
+            # Verify imports for langchain agent utilities
+            if initialize_agent is None or Tool is None:
+                raise ImportError(
+                    "Incompatible langchain package: `initialize_agent` or `Tool` not found. "
+                    "Install a compatible langchain version or update the code."
+                )
         
         # Create tools
         tools = [

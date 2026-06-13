@@ -3,7 +3,17 @@ Code review agent for the Code Assistant App.
 """
 
 from langchain_openai import ChatOpenAI
-from langchain.agents import initialize_agent, Tool
+try:
+    from langchain.agents import initialize_agent, Tool
+except Exception:
+    try:
+        from langchain.agents.agent import initialize_agent
+    except Exception:
+        initialize_agent = None
+    try:
+        from langchain.tools import Tool
+    except Exception:
+        Tool = None
 from langchain.agents.agent_types import AgentType
 from langchain.chains import LLMChain
 from langchain.prompts.chat import (

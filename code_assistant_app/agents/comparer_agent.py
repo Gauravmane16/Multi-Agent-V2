@@ -3,7 +3,17 @@ Code comparison agent for the Code Assistant App.
 """
 
 from langchain_openai import ChatOpenAI
-from langchain.agents import initialize_agent, Tool
+try:
+    from langchain.agents import initialize_agent, Tool
+except Exception:
+    try:
+        from langchain.agents.agent import initialize_agent
+    except Exception:
+        initialize_agent = None
+    try:
+        from langchain.tools import Tool
+    except Exception:
+        Tool = None
 from langchain.agents.agent_types import AgentType
 from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
@@ -53,6 +63,13 @@ def create_comparer_agent(api_key: str, model_name: str = "gpt-3.5-turbo-16k",
         # Create comparison chain
         compare_chain = LLMChain(llm=llm, prompt=compare_prompt)
         
+        # Verify imports for langchain agent utilities
+        if initialize_agent is None or Tool is None:
+            raise ImportError(
+                "Incompatible langchain package: `initialize_agent` or `Tool` not found. "
+                "Install a compatible langchain version or update the code."
+            )
+
         # Create tools
         tools = [
             Tool(
