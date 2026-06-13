@@ -4,7 +4,8 @@ numpy
 scikit-learn
 requests
 python-dotenv
-langchain
+# Pin langchain to a version that exposes the legacy import paths used in the app
+langchain==0.0.232
 langchain_community
 langchain_openai
 # streamlit>=1.22.0
