@@ -4,7 +4,7 @@ numpy
 scikit-learn
 requests
 python-dotenv
-langchain
+langchain<0.1.0
 langchain_community
 langchain_openai
 # streamlit>=1.22.0
