@@ -2,8 +2,21 @@
 Code optimization agent for the Code Assistant App.
 """
 
-from langchain_openai import ChatOpenAI  # Updated import
-from langchain.agents import AgentType, initialize_agent, Tool
+from langchain_openai import ChatOpenAI  # Updated import                  
+# Import AgentType with fallbacks to support multiple langchain versions
+try:
+    from langchain.agents import AgentType, initialize_agent, Tool
+except Exception:
+    from langchain.agents import initialize_agent, Tool
+    try:
+        from langchain.agents.agent_types import AgentType
+    except Exception:
+        try:
+            from langchain.agents.agent import AgentType
+        except Exception:
+            from enum import Enum
+            class AgentType(Enum):
+                ZERO_SHOT_REACT_DESCRIPTION = 'zero-shot-react-description'
 from langchain.chains import LLMChain
 from langchain.prompts.chat import (
     ChatPromptTemplate,
