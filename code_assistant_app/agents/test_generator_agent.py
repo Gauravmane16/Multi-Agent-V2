@@ -3,7 +3,8 @@ Unit test generator agent for the Code Assistant App.
 """
 
 from langchain_openai import ChatOpenAI
-from langchain.agents import AgentType, initialize_agent, Tool
+from langchain.agents import initialize_agent, Tool
+from langchain.agents.agent_types import AgentType
 from langchain.chains import LLMChain
 from langchain.prompts.chat import (
     ChatPromptTemplate,
