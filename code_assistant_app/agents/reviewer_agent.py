@@ -3,20 +3,7 @@ Code review agent for the Code Assistant App.
 """
 
 from langchain_openai import ChatOpenAI 
-# Import AgentType with fallbacks to support multiple langchain versions
-try:
-    from langchain.agents import AgentType, initialize_agent, Tool
-except Exception:
-    from langchain.agents import initialize_agent, Tool
-    try:
-        from langchain.agents.agent_types import AgentType
-    except Exception:
-        try:
-            from langchain.agents.agent import AgentType
-        except Exception:
-            from enum import Enum
-            class AgentType(Enum):
-                ZERO_SHOT_REACT_DESCRIPTION = 'zero-shot-react-description'
+from langchain.agents import AgentExecutor, initialize_agent, Tool
 from langchain.chains import LLMChain
 from langchain.prompts.chat import (
     ChatPromptTemplate,
@@ -81,7 +68,7 @@ def create_reviewer_agent(api_key: str, model_name: str = "gpt-3.5-turbo-16k",
         agent = initialize_agent(
             tools=tools,
             llm=llm,
-            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
+            agent=AgentExecutor.ZERO_SHOT_REACT_DESCRIPTION,
             verbose=True
         )
         
