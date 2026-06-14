@@ -4,7 +4,7 @@ Uses modern LangChain LCEL (pipe) pattern — no deprecated LLMChain or initiali
 """
 
 from langchain_openai import ChatOpenAI
-from langchain.prompts import PromptTemplate
+from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from config.prompts import COMPARE_TEMPLATE
 from typing import Optional

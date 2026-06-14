@@ -4,7 +4,7 @@ Uses modern LangChain LCEL (pipe) pattern — no deprecated LLMChain or initiali
 """
 
 from langchain_openai import ChatOpenAI
-from langchain.prompts.chat import (
+from langchain_core.prompts import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
