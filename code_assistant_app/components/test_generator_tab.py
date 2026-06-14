@@ -115,8 +115,8 @@ def handle_test_generation(api_key: str, files_data: List[Dict[str, str]]) -> No
     try:
         with st.spinner("Generating unit tests..."):
             # Get model settings from session state
-            model = st.session_state.get("selected_model", "gpt-4")  # Default to GPT-4 if not set
-            temperature = st.session_state.get("temperature", 0.7)    # Default to 0.7 if not set
+            model = st.session_state.get("model", "gpt-4o-mini")  # Default to GPT-4 if not set
+            temperature = st.session_state.get("temperature", 0.2)    # Default to 0.7 if not set
             
             # Create test generator agent with UI-selected parameters
             agent = create_test_generator_agent(
