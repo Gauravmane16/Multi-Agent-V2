@@ -1,120 +1,48 @@
 """
 Code comparison agent for the Code Assistant App.
+Uses modern LangChain LCEL (pipe) pattern — no deprecated LLMChain or initialize_agent.
 """
 
 from langchain_openai import ChatOpenAI
-try:
-    from langchain.agents import initialize_agent, Tool
-except Exception:
-    try:
-        from langchain.agents.agent import initialize_agent
-    except Exception:
-        initialize_agent = None
-    try:
-        from langchain.tools import Tool
-    except Exception:
-        Tool = None
-from langchain.agents.agent_types import AgentType
-from langchain.chains import LLMChain
 from langchain.prompts import PromptTemplate
-from langchain.prompts.chat import (
-    ChatPromptTemplate,
-    SystemMessagePromptTemplate,
-    HumanMessagePromptTemplate,
-)
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from config.prompts import COMPARER_SYSTEM_TEMPLATE, COMPARE_TEMPLATE
-from typing import Optional, Dict, Any
+from langchain_core.output_parsers import StrOutputParser
+from config.prompts import COMPARE_TEMPLATE
+from typing import Optional
 
 
-def create_comparer_agent(api_key: str, model_name: str = "gpt-3.5-turbo-16k", 
-                         temperature: float = 0.2) -> Optional[object]:
+def create_comparer_agent(api_key: str, model_name: str = "gpt-4o-mini",
+                          temperature: float = 0.2) -> Optional[object]:
     """
-    Create an AI agent for code comparison.
-    
-    Args:
-        api_key: OpenAI API key
-        model_name: Name of the model to use
-        temperature: Temperature for the model
-        
+    Create an LCEL chain for code comparison.
+
     Returns:
-        object: LangChain agent for code comparison or None if error
+        Runnable chain or None on error.
     """
     try:
-        # Create LLM
         llm = ChatOpenAI(
             model=model_name,
             temperature=temperature,
-            openai_api_key=api_key
+            api_key=api_key
         )
-        
-        # Create text splitter for chunking
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=2000,
-            chunk_overlap=200
-        )
-        
-        # Create prompt for comparison
+
         compare_prompt = PromptTemplate(
             template=COMPARE_TEMPLATE,
             input_variables=["first_code", "second_code"]
         )
-        
-        # Create comparison chain
-        compare_chain = LLMChain(llm=llm, prompt=compare_prompt)
-        
-        # Verify imports for langchain agent utilities
-        if initialize_agent is None or Tool is None:
-            raise ImportError(
-                "Incompatible langchain package: `initialize_agent` or `Tool` not found. "
-                "Install a compatible langchain version or update the code."
-            )
 
-        # Create tools
-        tools = [
-            Tool(
-                name="CompareCodeFiles",
-                func=lambda inputs: compare_chain.run(
-                    first_code=inputs.get("first_code", ""),
-                    second_code=inputs.get("second_code", "")
-                ),
-                description="Compare two code files and analyze their differences"
-            )
-        ]
-        
-        # Initialize agent
-        agent = initialize_agent(
-            tools=tools,
-            llm=llm,
-            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=True
-        )
-        
-        return agent
-    
+        chain = compare_prompt | llm | StrOutputParser()
+        return chain
+
     except Exception as e:
         print(f"Error creating comparer agent: {str(e)}")
         return None
 
 
-def compare_code(agent: object, first_code: str, second_code: str) -> str:
+def compare_code(chain: object, first_code: str, second_code: str) -> str:
     """
-    Compare the provided code files using the agent.
-    
-    Args:
-        agent: LangChain agent for code comparison
-        first_code: First code snippet
-        second_code: Second code snippet
-        
-    Returns:
-        str: Comparison result
+    Compare two code files using the LCEL chain.
     """
     try:
-        input_data = {
-            "first_code": first_code,
-            "second_code": second_code
-        }
-        comparison_result = agent.run(input=input_data)
-        return comparison_result
+        return chain.invoke({"first_code": first_code, "second_code": second_code})
     except Exception as e:
         return f"Error during code comparison: {str(e)}"

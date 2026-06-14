@@ -1,20 +1,11 @@
-streamlit
-pandas
-numpy
-scikit-learn
-requests
-python-dotenv
-langchain
-langchain_community
-langchain_openai
-# streamlit>=1.22.0
-# langchain>=0.1.0
-# langchain-community>=0.0.10
-# langchain-openai>=0.0.2
-# openai>=1.0.0
-# pandas>=2.0.0
-# numpy>=1.24.0
-# scikit-learn>=1.0.0
-# requests>=2.31.0
-# python-dotenv>=1.0.0
-# tiktoken>=0.5.0
+streamlit>=1.35.0
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+langchain>=0.3.0
+langchain-community>=0.3.0
+langchain-openai>=0.2.0
+openai>=1.40.0
+tiktoken>=0.7.0

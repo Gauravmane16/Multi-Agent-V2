@@ -1,53 +1,21 @@
 """
 Unit test generator agent for the Code Assistant App.
+Uses modern LangChain LCEL (pipe) pattern — no deprecated LLMChain or initialize_agent.
 """
 
 from langchain_openai import ChatOpenAI
-try:
-    from langchain.agents import initialize_agent, Tool
-except Exception:
-    try:
-        from langchain.agents.agent import initialize_agent
-    except Exception:
-        initialize_agent = None
-    try:
-        from langchain.tools import Tool
-    except Exception:
-        Tool = None
-from langchain.agents.agent_types import AgentType
-from langchain.chains import LLMChain
 from langchain.prompts.chat import (
     ChatPromptTemplate,
     SystemMessagePromptTemplate,
     HumanMessagePromptTemplate,
 )
-from typing import Optional, Dict, List, Union
+from langchain_core.output_parsers import StrOutputParser
+from typing import Optional, Dict, List
 import zipfile
 import io
 
 
-def create_test_generator_agent(api_key: str, model_name: str, temperature: float) -> Optional[object]:
-    """
-    Create an AI agent for generating unit tests.
-    
-    Args:
-        api_key: OpenAI API key
-        model_name: Name of the model (from UI selection)
-        temperature: Temperature value (from UI selection)
-        
-    Returns:
-        object: LangChain agent for test generation or None if error
-    """
-    try:
-        # Create LLM
-        llm = ChatOpenAI(
-            model=model_name,
-            temperature=temperature,
-            openai_api_key=api_key
-        )
-        
-        # Create chat prompt
-        system_template = """You are a test generation specialist. Your task is to:
+_SYSTEM_TEMPLATE = """You are a test generation specialist. Your task is to:
 1. Analyze the provided code and understand its functionality
 2. Generate comprehensive unit tests that cover:
    - Main functionality
@@ -59,114 +27,69 @@ def create_test_generator_agent(api_key: str, model_name: str, temperature: floa
 5. Add clear comments explaining test cases
 
 Remember to:
+- Follow testing best practices
+- Include assertion messages
+- Use meaningful test names
+- Group related tests
+- Mock external dependencies when needed"""
+
+
+def create_test_generator_agent(api_key: str, model_name: str = "gpt-4o-mini",
+                                temperature: float = 0.2) -> Optional[object]:
+    """
+    Create an LCEL chain for unit test generation.
+
+    Returns:
+        Runnable chain or None on error.
+    """
+    try:
+        llm = ChatOpenAI(
+            model=model_name,
+            temperature=temperature,
+            api_key=api_key
+        )
 
         chat_prompt = ChatPromptTemplate.from_messages([
-            SystemMessagePromptTemplate.from_template(system_template),
+            SystemMessagePromptTemplate.from_template(_SYSTEM_TEMPLATE),
             HumanMessagePromptTemplate.from_template("{input}")
         ])
-        
-        # Create test generation chain
-        test_chain = LLMChain(llm=llm, prompt=chat_prompt)
-        
-            # Verify imports for langchain agent utilities
-            if initialize_agent is None or Tool is None:
-                raise ImportError(
-                    "Incompatible langchain package: `initialize_agent` or `Tool` not found. "
-                    "Install a compatible langchain version or update the code."
-                )
-        
-        # Create tools
-        tools = [
-            Tool(
-                name="GenerateTests",
-                func=lambda x: test_chain.run(input=x),
-                description="Generate unit tests for the provided code"
-            )
-        ]
-        
-        # Initialize agent
-        agent = initialize_agent(
-            tools=tools,
-            llm=llm,
-            agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION,
-            verbose=True,
-            handle_parsing_errors=True
-        )
-        
-        return agent
-    
+
+        chain = chat_prompt | llm | StrOutputParser()
+        return chain
+
     except Exception as e:
         print(f"Error creating test generator agent: {str(e)}")
         return None
 
 
-def generate_tests_for_file(agent: object, code_content: str, 
-                           filename: str) -> Dict[str, str]:
+def generate_tests_for_file(chain: object, code_content: str,
+                            filename: str) -> Dict[str, str]:
     """
     Generate unit tests for a single file.
-    
-    Args:
-        agent: LangChain agent for test generation
-        code_content: Code to generate tests for
-        filename: Name of the file
-        
-    Returns:
-        Dict[str, str]: Dictionary containing test results
     """
     try:
-        # Prepare input with file information
-        input_text = f"""Generate unit tests for the following code from {filename}:
-
-{code_content}
-
-Please provide complete test file content including imports and proper test structure."""
-
-        # Generate tests
-        test_result = agent.run(input=input_text)
-        
-        return {
-            "filename": f"test_{filename}",
-            "content": test_result
-        }
+        input_text = (
+            f"Generate unit tests for the following code from {filename}:\n\n"
+            f"{code_content}\n\n"
+            "Please provide complete test file content including imports and proper test structure."
+        )
+        result = chain.invoke({"input": input_text})
+        return {"filename": f"test_{filename}", "content": result}
     except Exception as e:
-        return {
-            "filename": f"test_{filename}",
-            "content": f"Error generating tests: {str(e)}"
-        }
+        return {"filename": f"test_{filename}", "content": f"Error generating tests: {str(e)}"}
 
 
-def generate_tests_for_multiple_files(agent: object, 
-                                    files: List[Dict[str, str]]) -> List[Dict[str, str]]:
+def generate_tests_for_multiple_files(chain: object,
+                                      files: List[Dict[str, str]]) -> List[Dict[str, str]]:
     """
     Generate unit tests for multiple files.
-    
-    Args:
-        agent: LangChain agent for test generation
-        files: List of dictionaries containing filename and content
-        
-    Returns:
-        List[Dict[str, str]]: List of dictionaries containing test results
     """
-    results = []
-    for file_info in files:
-        result = generate_tests_for_file(
-            agent,
-            file_info["content"],
-            file_info["filename"]
-        )
-        results.append(result)
-    return results
+    return [generate_tests_for_file(chain, f["content"], f["filename"]) for f in files]
 
 
 def process_zip_file(zip_content: bytes) -> List[Dict[str, str]]:
     """
-    Process a zip file and extract code files.
-    
-    Args:
-        zip_content: Bytes content of the zip file
-        
-    Returns:
-        List[Dict[str, str]]: List of dictionaries containing filename and content
+    Process a zip file and extract supported code files.
     """
     files = []
     with zipfile.ZipFile(io.BytesIO(zip_content)) as z:
@@ -174,8 +97,5 @@ def process_zip_file(zip_content: bytes) -> List[Dict[str, str]]:
             if filename.endswith(('.py', '.js', '.ts', '.java', '.cpp', '.cs')):
                 with z.open(filename) as f:
                     content = f.read().decode('utf-8')
-                    files.append({
-                        "filename": filename,
-                        "content": content
-                    })
+                    files.append({"filename": filename, "content": content})
     return files
